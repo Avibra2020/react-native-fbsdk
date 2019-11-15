@@ -27,63 +27,61 @@ import com.facebook.react.bridge.ReactApplicationContext;
 import com.facebook.react.bridge.ReactMethod;
 import com.facebook.react.bridge.ReadableMap;
 import com.facebook.react.bridge.WritableMap;
-import com.facebook.share.model.GameRequestContent;
-import com.facebook.share.widget.GameRequestDialog;
+import com.facebook.share.model.AppInviteContent;
+import com.facebook.share.widget.AppInviteDialog;
 
 /**
- * Provides functionality to send requests in games.
- * See https://developers.facebook.com/docs/games/requests
+ * A dialog for inviting users.
  */
-public class FBGameRequestDialogModule extends FBSDKDialogBaseJavaModule {
+public class FBAppInviteDialogModule extends FBSDKDialogBaseJavaModule {
 
-    private class GameRequestDialogCallback extends ReactNativeFacebookSDKCallback<GameRequestDialog.Result> {
+    private class AppInviteDialogCallback extends ReactNativeFacebookSDKCallback<AppInviteDialog.Result> {
 
-        public GameRequestDialogCallback(Promise promise) {
+        public AppInviteDialogCallback(Promise promise) {
             super(promise);
         }
 
         @Override
-        public void onSuccess(GameRequestDialog.Result result) {
+        public void onSuccess(AppInviteDialog.Result result) {
             if (mPromise != null) {
-                WritableMap gameRequestDialogResult = Arguments.createMap();
-                gameRequestDialogResult.putString("requestId", result.getRequestId());
-                gameRequestDialogResult.putArray("to", Utility.listToReactArray(result.getRequestRecipients()));
-                mPromise.resolve(gameRequestDialogResult);
+                WritableMap inviteResult = Arguments.createMap();
+                inviteResult.putMap("data", Arguments.fromBundle(result.getData()));
+                mPromise.resolve(inviteResult);
                 mPromise = null;
             }
         }
     }
 
-    public FBGameRequestDialogModule(ReactApplicationContext reactContext, CallbackManager callbackManager) {
+    public FBAppInviteDialogModule(ReactApplicationContext reactContext, CallbackManager callbackManager) {
         super(reactContext, callbackManager);
     }
 
     @Override
     public String getName() {
-        return "FBGameRequestDialog";
+        return "FBAppInviteDialog";
     }
 
     /**
-     * Indicates whether the game request dialog can be shown.
-     * @param promise Use promise to pass the result to JS whether the dialog can be shown.
+     * Indicates whether the app invite dialog can be shown.
+     * @param promise Use promise to pass result to JS.
      */
     @ReactMethod
     public void canShow(Promise promise) {
-        promise.resolve(GameRequestDialog.canShow());
+        promise.resolve(AppInviteDialog.canShow());
     }
 
     /**
-     * Shows a GameRequestDialog to send a request.
-     * @param gameRequestContentMap must be a valid {@link GameRequestContent}.
-     * @param promise Use promise to pass the game request dialog result to JS.
+     * Helper to show the provided {@link com.facebook.share.model.AppInviteContent}.
+     * @param appInviteContentMap must be a valid {@link AppInviteContent}
+     * @param promise Use promise to pass the app invite dialog result to JS.
      */
     @ReactMethod
-    public void show(ReadableMap gameRequestContentMap, Promise promise) {
+    public void show(ReadableMap appInviteContentMap, Promise promise) {
         if (getCurrentActivity() != null) {
-            GameRequestDialog gameRequestDialog = new GameRequestDialog(getCurrentActivity());
-            GameRequestContent gameRequestContent = Utility.buildGameRequestContent(gameRequestContentMap);
-            gameRequestDialog.registerCallback(getCallbackManager(), new GameRequestDialogCallback(promise));
-            gameRequestDialog.show(gameRequestContent);
+            AppInviteDialog appInviteDialog = new AppInviteDialog(getCurrentActivity());
+            AppInviteContent appInviteContent = Utility.buildAppInviteContent(appInviteContentMap);
+            appInviteDialog.registerCallback(getCallbackManager(), new AppInviteDialogCallback(promise));
+            appInviteDialog.show(appInviteContent);
         } else {
             promise.reject("No current activity.");
         }

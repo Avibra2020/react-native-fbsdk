@@ -20,39 +20,56 @@
 
 package com.facebook.reactnative.androidsdk;
 
+import com.facebook.CallbackManager;
+import com.facebook.internal.InternalSettings;
 import com.facebook.react.ReactPackage;
+import com.facebook.react.bridge.JavaScriptModule;
 import com.facebook.react.bridge.NativeModule;
 import com.facebook.react.bridge.ReactApplicationContext;
 import com.facebook.react.uimanager.ViewManager;
 
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 
 public class FBSDKPackage implements ReactPackage {
 
-    private FBActivityEventListener mActivityEventListener = new FBActivityEventListener();
+    public static final String VERSION_TO_RELEASE = "ReactNative-v0.7.0";
+
+    private CallbackManager mCallbackManager;
+    public FBSDKPackage(CallbackManager callbackManager) {
+        mCallbackManager = callbackManager;
+    }
 
     @Override
     public List<NativeModule> createNativeModules(
             ReactApplicationContext reactContext) {
+        InternalSettings.setCustomUserAgent(VERSION_TO_RELEASE);
         return Arrays.<NativeModule>asList(
                 new FBAccessTokenModule(reactContext),
                 new FBAppEventsLoggerModule(reactContext),
-                new FBGameRequestDialogModule(reactContext, mActivityEventListener),
+                new FBAppInviteDialogModule(reactContext, mCallbackManager),
+                new FBGameRequestDialogModule(reactContext, mCallbackManager),
                 new FBGraphRequestModule(reactContext),
-                new FBLoginManagerModule(reactContext, mActivityEventListener),
-                new FBMessageDialogModule(reactContext, mActivityEventListener),
+                new FBLoginManagerModule(reactContext, mCallbackManager),
+                new FBMessageDialogModule(reactContext, mCallbackManager),
                 new FBShareAPIModule(reactContext),
-                new FBShareDialogModule(reactContext, mActivityEventListener)
+                new FBShareDialogModule(reactContext, mCallbackManager)
         );
     }
 
     @Override
     public List<ViewManager> createViewManagers(ReactApplicationContext reactContext) {
         return Arrays.<ViewManager>asList(
-                new FBLoginButtonManager(reactContext),
+                new FBLikeViewManager(),
+                new FBLoginButtonManager(reactContext, mCallbackManager),
                 new FBSendButtonManager(),
                 new FBShareButtonManager()
         );
+    }
+
+    // Deprecated in RN 0.47.0
+    public List<Class<? extends JavaScriptModule>> createJSModules() {
+        return Collections.emptyList();
     }
 }

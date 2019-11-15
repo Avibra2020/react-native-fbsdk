@@ -22,11 +22,7 @@
 
 #import "RCTConvert+FBSDKAccessToken.h"
 
-static NSString *const kFBSDKAccessTokenDidChangeEvent = @"fbsdk.accessTokenDidChange";
-
-@implementation RCTFBSDKAccessToken {
-  BOOL _isObserving;
-}
+@implementation RCTFBSDKAccessToken
 
 RCT_EXPORT_MODULE(FBAccessToken);
 
@@ -60,38 +56,6 @@ RCT_EXPORT_METHOD(refreshCurrentAccessTokenAsync:(RCTPromiseResolveBlock)resolve
   }];
 }
 
-#pragma mark - Event Methods
-
-- (NSArray *)supportedEvents
-{
-  return @[kFBSDKAccessTokenDidChangeEvent];
-}
-
-- (void)startObserving
-{
-  _isObserving = YES;
-  [[NSNotificationCenter defaultCenter] addObserver:self
-                                           selector:@selector(accessTokenDidChange:)
-                                               name:FBSDKAccessTokenDidChangeNotification
-                                             object:nil];
-}
-
-- (void)stopObserving
-{
-  _isObserving = NO;
-  [[NSNotificationCenter defaultCenter] removeObserver:self
-                                                  name:FBSDKAccessTokenDidChangeNotification
-                                                object:nil];
-}
-
-- (void)accessTokenDidChange:(NSNotification*)notification
-{
-  if ([notification.name isEqualToString:FBSDKAccessTokenDidChangeNotification] && _isObserving) {
-    NSDictionary *body = RCTBuildAccessTokenDict([FBSDKAccessToken currentAccessToken]);
-    [self sendEventWithName:kFBSDKAccessTokenDidChangeEvent body:body ?: [NSNull null]];
-  }
-}
-
 #pragma mark - Helper Functions
 
 static NSDictionary *RCTBuildAccessTokenDict(FBSDKAccessToken *token)
@@ -101,14 +65,12 @@ static NSDictionary *RCTBuildAccessTokenDict(FBSDKAccessToken *token)
   }
   return @{
     @"accessToken": token.tokenString,
-    @"permissions": token.permissions.allObjects,
-    @"declinedPermissions": token.declinedPermissions.allObjects,
-    @"expiredPermissions": token.expiredPermissions.allObjects,
     @"applicationID": token.appID,
     @"userID": token.userID,
+    @"permissions": token.permissions.allObjects,
+    @"declinedPermissions": token.declinedPermissions.allObjects,
     @"expirationTime": @(token.expirationDate.timeIntervalSince1970 * 1000),
     @"lastRefreshTime": @(token.refreshDate.timeIntervalSince1970 * 1000),
-    @"dataAccessExpirationTime": @(token.dataAccessExpirationDate.timeIntervalSince1970 * 1000),
   };
 }
 

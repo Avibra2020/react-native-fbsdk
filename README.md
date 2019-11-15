@@ -1,173 +1,211 @@
 # React Native FBSDK
-
 React Native FBSDK is a wrapper around the iOS Facebook SDK and Android Facebook SDK, allowing for Facebook integration in [React Native](https://facebook.github.io/react-native/) apps. Access to native components, from login to sharing, is provided entirely through documented JavaScript modules so you don't have to call a single native function directly.
 
-Functionality is provided through one single npm package so you can use it for both platforms without downloading any extra packages. Follow this guide to use react-native-fbsdk in your React Native app. You can also visit https://developers.facebook.com/docs/react-native for tutorials and reference documentation.
+Functionality is provided through one single npm package so you can use it for both platforms without downloading any extra packages. Follow this guide to use react-native-fbsdk in your react-native app. You can also visit https://developers.facebook.com/docs/react-native for tutorials and reference documentation.
 
-- [Installation](#installation)
-- [Usage](#usage)
-- [Contributing](#join-the-react-native-community)
-- [License](#license)
-
----
+## GIVE FEEDBACK
+Please post questions on sdk set up to stackoverflow for quicker response. Besides it's easier for others searching for similar questions.
+Report bugs or issues to https://developers.facebook.com/bugs/
 
 ## Installation
+You need to install the sdk with [npm](https://www.npmjs.com/) and configure native Android/iOS project in the react native project.
+### 1. Create React Native project
 
-## React Native Compatibility
-To use this library you need to ensure you match up with the correct version of React Native you are using.
-
-| `react-native-fbsdk` version | Required React Native Version                                                     |
-| ----------------------------------------- | --------------------------------------------------------------------------------- |
-| `>= 1.0.0`                                   | `>= 0.60`                                                                     |
-| `<= 0.10`                                   | `<= 0.59.x`                                                                         |
-
-### 1. Install the library
-
-using either Yarn:
-
-```
-yarn add react-native-fbsdk
-```
-
-or npm:
-
-```
-npm install --save react-native-fbsdk
-```
-
-### 2. Link
-
-- **React Native 0.60+**
-
-
-[CLI autolink feature](https://github.com/react-native-community/cli/blob/master/docs/autolinking.md) links the module while building the app. 
-
-
-- **React Native <= 0.59**
-
-
-```bash
-$ react-native link react-native-fbsdk
-```
-
-*Note* For `iOS` using `cocoapods`, run:
-
-```bash
-$ cd ios/ && pod install
-```
-
-If you can't or don't want to use the CLI tool, you can also manually link the library using the instructions below (click on the arrow to show them):
-
-<details>
-<summary>Manually link the library on iOS</summary>
-
-Either follow the [instructions in the React Native documentation](https://facebook.github.io/react-native/docs/linking-libraries-ios#manual-linking) to manually link the framework or link using [Cocoapods](https://cocoapods.org) by adding this to your `Podfile`:
-
+First create a React Native project:
 ```ruby
-pod 'react-native-fbsdk', :path => '../node_modules/react-native-fbsdk'
+react-native init YourApp
 ```
 
-</details>
+### 2. Install JavaScript packages
 
-<details>
-<summary>Manually link the library on Android</summary>
+Install and link the react-native-fbsdk package:
+```ruby
+npm install react-native-fbsdk
+react-native link react-native-fbsdk
+```
+### 3. Configure native projects
 
-Make the following changes:
+#### 3.1 Android project
+Assuming you have [Android Studio](http://developer.android.com/sdk/index.html) installed, open the project with Android Studio.
 
-#### `android/settings.gradle`
-```groovy
+**If your react-native version is below 0.29.0**
+
+Go to `MainActivity.java` under `app/src/main/java/com/<project name>/` to complete setup.
+Note that packages must be imported to use.
+
+Add an instance variable of type `CallbackManager` in class.
+```java
+import android.content.Intent;     // <--- import
+import android.os.Bundle;
+
+import com.facebook.CallbackManager;
+import com.facebook.FacebookSdk;
+import com.facebook.reactnative.androidsdk.FBSDKPackage;
+
+public class MainActivity extends ReactActivity {
+    CallbackManager mCallbackManager;
+    //...
+```
+Register sdk package in method `getPackages()`.
+```java
+@Override
+protected List<ReactPackage> getPackages() {
+    mCallbackManager = new CallbackManager.Factory().create();
+    ReactPackage packages[] = new ReactPackage[]{
+        new MainReactPackage(),
+        new FBSDKPackage(mCallbackManager),
+    };
+    return Arrays.<ReactPackage>asList(packages);
+}
+```
+Override `onActivityResult()`.
+```java
+@Override
+public void onActivityResult(int requestCode, int resultCode, Intent data) {
+    super.onActivityResult(requestCode, resultCode, data);
+    mCallbackManager.onActivityResult(requestCode, resultCode, data);
+}
+```
+Before you can run the project, follow the [Getting Started Guide](https://developers.facebook.com/docs/android/getting-started/) for Facebook Android SDK to set up a Facebook app. You can skip the build.gradle changes since that's taken care of by the rnpm link step above, but ***make sure*** you follow the rest of the steps such as calling `FacebookSdk.sdkInitialize` and updating `strings.xml` and `AndroidManifest.xml`. Note that react-native project ***doesn't have*** the Application class, so you'll need to create an implementation of the Application class yourself.
+
+**If your react-native version is 0.29 or above**
+
+Go to `MainApplication.java` and `MainActivity.java` under `app/src/main/java/com/<project name>/` to complete setup.
+
+In `MainApplication.java`,
+
+Add an instance variable of type `CallbackManager` and its getter.
+```java
+import com.facebook.CallbackManager;
+import com.facebook.FacebookSdk;
+import com.facebook.reactnative.androidsdk.FBSDKPackage;
+import com.facebook.appevents.AppEventsLogger;
+...
+
+public class MainApplication extends Application implements ReactApplication {
+
+  private static CallbackManager mCallbackManager = CallbackManager.Factory.create();
+
+  protected static CallbackManager getCallbackManager() {
+    return mCallbackManager;
+  }
+    //...
+```
+
+If you want to use AppEventsLogger to log events, override `onCreate()` method and add
+```java
+@Override
+public void onCreate() {
+  super.onCreate();
+  AppEventsLogger.activateApp(this);
+  //...
+}
+```
+
+Register SDK package in method `getPackages()`.
+```java
+private final ReactNativeHost mReactNativeHost = new ReactNativeHost(this) {
+    @Override
+    public boolean getUseDeveloperSupport() {
+      return BuildConfig.DEBUG;
+    }
+
+    @Override
+    protected List<ReactPackage> getPackages() {
+      return Arrays.<ReactPackage>asList(
+          new MainReactPackage(),
+          new FBSDKPackage(mCallbackManager)
+      );
+    }
+};
+```
+
+In `MainActivity.java`
+
+Override `onActivityResult()` method
+```java
+import android.content.Intent;
+
+public class MainActivity extends ReactActivity {
+
+    @Override
+    public void onActivityResult(int requestCode, int resultCode, Intent data) {
+        super.onActivityResult(requestCode, resultCode, data);
+        MainApplication.getCallbackManager().onActivityResult(requestCode, resultCode, data);
+    }
+    //...
+```
+
+Also you need to add in your `settings.gradle`:
+```
 include ':react-native-fbsdk'
 project(':react-native-fbsdk').projectDir = new File(rootProject.projectDir, '../node_modules/react-native-fbsdk/android')
 ```
 
-#### `android/app/build.gradle`
-```groovy
+And add react-native-fbsdk to dependencies in your app `build.gradle`:
+```
 dependencies {
-   ...
-   implementation project(':react-native-fbsdk')
+    ...
+    implementation 'com.facebook.android:facebook-android-sdk:4.34.0'
+    implementation project(':react-native-fbsdk')
 }
 ```
-
-#### `android/app/src/main/.../MainApplication.java`
-On top, where imports are:
-
-```java
-import com.facebook.reactnative.androidsdk.FBSDKPackage;
-```
-
-Add the `FBSDKPackage` class to your list of exported packages.
-
-```java
-@Override
-protected List<ReactPackage> getPackages() {
-    return Arrays.asList(
-            new MainReactPackage(),
-            new FBSDKPackage()
-    );
-}
-```
-</details>
-
-### 3. Configure projects
-
-#### 3.1 Android
 
 Before you can run the project, follow the [Getting Started Guide](https://developers.facebook.com/docs/android/getting-started/) for Facebook Android SDK to set up a Facebook app. You can skip the build.gradle changes since that's taken care of by the rnpm link step above, but **make sure** you follow the rest of the steps such as updating `strings.xml` and `AndroidManifest.xml`.
 
-#### 3.2 iOS
+#### 3.2 iOS project
+The react-native-fbsdk has been linked by rnpm, the next step will be downloading and linking the native Facebook SDK for iOS.
+Make sure you have the latest [Xcode](https://developer.apple.com/xcode/) installed. Open the .xcodeproj in Xcode found in the `ios` subfolder from your project's root directory. Now, follow ***all the steps*** in the [Getting Started Guide](https://developers.facebook.com/docs/ios/getting-started/) for Facebook SDK for iOS. Along with `FBSDKCoreKit.framework`, don't forget to import `FBSDKShareKit.framework` and `FBSDKLoginKit.framework` into your Xcode project.
 
-Follow ***steps 3 and 4*** in the [Getting Started Guide](https://developers.facebook.com/docs/ios/getting-started/) for Facebook SDK for iOS.
-
-**If you're not using cocoapods already** you can also follow step 2 to set it up.
-
-**If you're using React Native's RCTLinkingManager**
+**If you're using react native's RCTLinkingManager**
 
 The `AppDelegate.m` file can only have one method for `openUrl`. If you're also using `RCTLinkingManager` to handle deep links, you should handle both results in your `openUrl` method.
 
-```objc
-- (BOOL)application:(UIApplication *)app
-            openURL:(NSURL *)url
-            options:(NSDictionary<UIApplicationOpenURLOptionsKey,id> *)options
-{
-  if ([[FBSDKApplicationDelegate sharedInstance] application:app openURL:url options:options]) {
-    return YES;
-  }
+```
+- (BOOL)application:(UIApplication *)application openURL:(NSURL *)url 
+    sourceApplication:(NSString *)sourceApplication annotation:(id)annotation {
 
-  if ([RCTLinkingManager application:app openURL:url options:options]) {
-    return YES;
-  }
+  BOOL handledFB = [[FBSDKApplicationDelegate sharedInstance] application:application
+    openURL:url
+    sourceApplication:sourceApplication
+    annotation:annotation
+  ];
 
-  return NO;
+  BOOL handledRCT = [RCTLinkingManager application:application openURL:url sourceApplication:sourceApplication annotation:annotation];
+
+  return handledFB || handledRCT;
 }
 ```
 
-### Troubleshooting
-
+#### 3.3 Troubleshooting
 1. I cannot run the Android project.
 
-- Make sure you added the code snippet in step 3.1.
-- Make sure you set up a Facebook app and updated the `AndroidManifest.xml` and `res/values/strings.xml` with Facebook app settings.
+  - Make sure you added the code snippet in step 3.1.
+  - Make sure you set up a Facebook app and updated the `AndroidManifest.xml` and `res/values/strings.xml` with Facebook app settings.
 
-2. Duplicate symbol errors
+2. I get a build error stating that one of the Facebook SDK files was not found -- eg. `FBSDKLoginKit/FBSDKLoginKit.h file not found`.
 
-- Make sure that `FBSDK[Core, Login, Share]Kit.framework` are **NOT** in `Link Binary with Libraries` for your **root project** when using cocoapods.
+  - Make sure that the Facebook SDK frameworks are installed in `~/Documents/FacebookSDK`.
+  - Make sure that `FBSDK[Core, Login, Share]Kit.framework` show up in the **Link Binary with Libraries** section of your build target's **Build Phases**.
+  - Make sure that `~/Documents/FacebookSDK` is in the **Framework Search Path** of your build target's **Build Settings**.
 
-3. I get this build error: `no type or protocol named UIApplicationOpenURLOptionsKey`:
+3. I get build errors like `Warning: Native component for "RCTFBLikeView" does not exist`:
 
-- Your Xcode version is too old. Upgrade to Xcode 10.0+.
+  - Make sure that `libRCTFBSDK.a` shows up in the **Link Binary with Libraries** section of your build target's **Build Phases**.
+
+4. I get this build error: `no type or protocol named UIApplicationOpenURLOptionsKey`:
+
+  - Your XCode version is too old, upgrade to XCode 8.0+.
 
 ## Usage
-
 ### [Login](https://developers.facebook.com/docs/facebook-login)
-
 #### Login Button + Access Token
-
 ```js
 import React, { Component } from 'react';
 import { View } from 'react-native';
 import { LoginButton, AccessToken } from 'react-native-fbsdk';
 
-export default class Login extends Component {
+export default class Login extends Component
   render() {
     return (
       <View>
@@ -191,44 +229,35 @@ export default class Login extends Component {
       </View>
     );
   }
-};
+});
 ```
-
 #### Requesting additional permissions with Login Manager
-
 You can also use the Login Manager with custom UI to perform Login.
-
 ```js
 // ...
 
-import { LoginManager } from "react-native-fbsdk";
+import { LoginManager } from 'react-native-fbsdk';
 
 // ...
 
 // Attempt a login using the Facebook login dialog asking for default permissions.
-LoginManager.logInWithPermissions(["public_profile"]).then(
+LoginManager.logInWithReadPermissions(['public_profile']).then(
   function(result) {
     if (result.isCancelled) {
-      console.log("Login cancelled");
+      console.log('Login cancelled');
     } else {
-      console.log(
-        "Login success with permissions: " +
-          result.grantedPermissions.toString()
-      );
+      console.log('Login success with permissions: '
+        +result.grantedPermissions.toString());
     }
   },
   function(error) {
-    console.log("Login fail with error: " + error);
+    console.log('Login fail with error: ' + error);
   }
 );
 ```
-
 ### [Sharing](https://developers.facebook.com/docs/sharing)
-
 #### Share dialogs
-
 All of the dialogs included are used in a similar way, with differing content types. All content types are defined with [Flow](http://flowtype.org/) Type Annotation in js/models directory.
-
 ```js
 // ...
 
@@ -271,9 +300,7 @@ shareLinkWithShareDialog() {
 ```
 
 #### Share Photos
-
 See [SharePhotoContent](/js/models/FBSharePhotoContent.js) and [SharePhoto](/js/models/FBSharePhoto.js) to refer other options.
-
 ```js
 const FBSDK = require('react-native-fbsdk');
 const {
@@ -292,9 +319,7 @@ ShareDialog.show(tmp.state.sharePhotoContent);
 ```
 
 #### Share Videos
-
 See [ShareVideoContent](/js/models/FBShareVideoContent.js) and [ShareVideo](/js/models/FBShareVideo.js) to refer other options.
-
 ```js
 const FBSDK = require('react-native-fbsdk');
 const {
@@ -313,9 +338,7 @@ ShareDialog.show(tmp.state.shareVideoContent);
 ```
 
 #### Share API
-
 Your app must have the `publish_actions` permission approved to share through the share API. You should prefer to use the Share Dialogs for an easier and more consistent experience.
-
 ```js
 // ...
 
@@ -349,26 +372,20 @@ ShareApi.canShare(this.state.shareLinkContent).then(
   }
 );
 ```
-
 ### [Analytics](https://developers.facebook.com/docs/app-events)
-
 #### App events
-
 ```js
 // ...
 
-import { AppEventsLogger } from "react-native-fbsdk";
+import { AppEventsLogger } from 'react-native-fbsdk';
 
 // ...
 
 // Log a $15 purchase.
-AppEventsLogger.logPurchase(15, "USD", { param: "value" });
+AppEventsLogger.logPurchase(15, 'USD', {'param': 'value'})
 ```
-
 ### [Graph API](https://developers.facebook.com/docs/graph-api)
-
 #### Graph Requests
-
 ```js
 // ...
 
@@ -394,33 +411,8 @@ const infoRequest = new GraphRequest(
 // Start the graph request.
 new GraphRequestManager().addRequest(infoRequest).start();
 ```
-
-## Example app
-
-- Run `yarn start` in the repo root to start the packager for the example app
-
-### iOS
-
-- Run `pod install` in `example/ios`
-- Open `example/ios/RNFBSDKExample.xcworkspace` with xcode
-- Run the example app
-
-### Android
-
-- Start a simulator
-- Run `./gradlew installDebug` in `example/android`
-
-## Join the React Native community
-
-- Website: https://facebook.github.io/react-native
-- Twitter: https://twitter.com/reactnative
-
-See the [CONTRIBUTING](./CONTRIBUTING.md) file for how to help out.
-
 ## License
-
 See the LICENSE file.
 
 ## Platform Policy
-
 Developers looking to integrate with the Facebook Platform should familiarize themselves with the [Facebook Platform Policy](https://developers.facebook.com/policy/).

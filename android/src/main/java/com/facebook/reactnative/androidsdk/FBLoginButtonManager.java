@@ -22,6 +22,7 @@ package com.facebook.reactnative.androidsdk;
 
 import androidx.annotation.Nullable;
 
+import com.facebook.CallbackManager;
 import com.facebook.login.DefaultAudience;
 import com.facebook.login.LoginBehavior;
 import com.facebook.react.bridge.ReactApplicationContext;
@@ -30,15 +31,19 @@ import com.facebook.react.uimanager.annotations.ReactProp;
 import com.facebook.react.uimanager.SimpleViewManager;
 import com.facebook.react.uimanager.ThemedReactContext;
 
+import java.util.ArrayList;
+import java.util.List;
 
 public class FBLoginButtonManager extends SimpleViewManager<RCTLoginButton> {
 
     public static final String REACT_CLASS = "RCTFBLoginButton";
 
-    private FBActivityEventListener mActivityEventListener = new FBActivityEventListener();
+    private ReactApplicationContext mReactApplicationContext;
+    private CallbackManager mCallbackManager;
 
-    public FBLoginButtonManager(ReactApplicationContext reactApplicationContext) {
-        reactApplicationContext.addActivityEventListener(mActivityEventListener);
+    public FBLoginButtonManager(ReactApplicationContext reactApplicationContext, CallbackManager callbackManager) {
+        mReactApplicationContext = reactApplicationContext;
+        mCallbackManager = callbackManager;
     }
 
     @Override
@@ -48,7 +53,8 @@ public class FBLoginButtonManager extends SimpleViewManager<RCTLoginButton> {
 
     @Override
     public RCTLoginButton createViewInstance(ThemedReactContext context) {
-        return new RCTLoginButton(context, mActivityEventListener.getCallbackManager());
+        RCTLoginButton button = new RCTLoginButton(context, mCallbackManager);
+        return button;
 
     }
 
@@ -62,10 +68,25 @@ public class FBLoginButtonManager extends SimpleViewManager<RCTLoginButton> {
         loginButton.setDefaultAudience(DefaultAudience.valueOf(defaultAudience.toUpperCase()));
     }
 
-    @ReactProp(name = "permissions")
-    public void setPermissions(
+    @ReactProp(name = "publishPermissions")
+    public void setPublishPermissions(
             RCTLoginButton loginButton,
             @Nullable ReadableArray publishPermissions) {
-        loginButton.setPermissions(Utility.reactArrayToStringList(publishPermissions));
+        loginButton.setPublishPermissions(reactArrayToJavaStringCollection(publishPermissions));
+    }
+
+    @ReactProp(name = "readPermissions")
+    public void setReadPermissions(
+            RCTLoginButton loginButton,
+            @Nullable ReadableArray readPermissions){
+        loginButton.setReadPermissions(reactArrayToJavaStringCollection(readPermissions));
+    }
+
+    private static List<String> reactArrayToJavaStringCollection(ReadableArray array) {
+        List<String> list = new ArrayList<>();
+        for (int i = 0; i < array.size(); i++) {
+            list.add(array.getString(i));
+        }
+        return list;
     }
 }

@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2015-present, Facebook, Inc. All rights reserved.
+ * Copyright (c) 2014-present, Facebook, Inc. All rights reserved.
  *
  * You are hereby granted a non-exclusive, worldwide, royalty-free license to use,
  * copy, modify, and distribute this software in source code or binary form for use
@@ -20,53 +20,31 @@
  * @flow
  * @format
  */
-
 'use strict';
 
-import PropTypes from 'prop-types';
-import * as React from 'react';
-import {requireNativeComponent, StyleSheet, ViewPropTypes} from 'react-native';
-
-import type {ShareContent} from './models/FBShareContent';
-
-class ShareButton extends React.Component<{
+/**
+ * A model for app invites.
+ */
+export type AppInviteContent = {
   /**
-   * Content to be shared.
+   * A URL to a preview image that will be displayed with the app invite.
+   * This is optional. If you don't include it, a fallback image will be used.
    */
-  shareContent: ShareContent,
-
+  previewImageUrl?: string,
   /**
-   * View style, if any.
+   * An app link target that will be used as a target when the user accepts the invite.
    */
-  style?: any,
-}> {
-  static defaultProps: {
-    style: typeof styles.defaultButtonStyle,
-  };
-
-  render() {
-    return <RCTFBShareButton {...this.props} />;
-  }
-}
-
-/* $FlowFixMe(>=0.43.0) - Remove this comment to see errors found when Flow
- * v0.43.0 was deployed */
-ShareButton.propTypes = {
-  ...ViewPropTypes,
-  shareContent: PropTypes.object,
+  applinkUrl: string,
+  /**
+   * Promotional code to be displayed while sending and receiving the invite.
+   * This is optional. This can be between 0 and 10 characters long and can contain
+   * alphanumeric characters only. To set a promo code, you need to set promo text.
+   */
+  promotionCode?: string,
+  /**
+   * Promotional text to be displayed while sending and receiving the invite.
+   * This is optional. This can be between 0 and 80 characters long and can contain
+   * alphanumeric and spaces only.
+   */
+  promotionText?: string,
 };
-
-const styles = StyleSheet.create({
-  defaultButtonStyle: {
-    height: 30,
-    width: 80,
-  },
-});
-
-ShareButton.defaultProps = {
-  style: styles.defaultButtonStyle,
-};
-
-const RCTFBShareButton = requireNativeComponent('RCTFBShareButton');
-
-module.exports = ShareButton;

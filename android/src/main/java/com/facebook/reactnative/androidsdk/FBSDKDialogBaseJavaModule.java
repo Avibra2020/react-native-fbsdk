@@ -16,56 +16,26 @@
  * COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER
  * IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
- *
- * @flow
- * @format
  */
-'use strict';
 
-import PropTypes from 'prop-types';
-import * as React from 'react';
-import {requireNativeComponent, StyleSheet, ViewPropTypes} from 'react-native';
+package com.facebook.reactnative.androidsdk;
 
-import type {ShareContent} from './models/FBShareContent';
+import android.content.Intent;
 
-class SendButton extends React.Component<{
-  /**
-   * Content to be shared.
-   */
-  shareContent: ShareContent,
+import com.facebook.CallbackManager;
+import com.facebook.react.bridge.ReactApplicationContext;
+import com.facebook.react.bridge.ReactContextBaseJavaModule;
 
-  /**
-   * View style, if any.
-   */
-  style?: any,
-}> {
-  static defaultProps: {
-    style: typeof styles.defaultButtonStyle,
-  };
+public abstract class FBSDKDialogBaseJavaModule extends ReactContextBaseJavaModule {
 
-  render() {
-    return <RCTFBSendButton {...this.props} />;
-  }
+    private CallbackManager mCallbackManager;
+
+    protected CallbackManager getCallbackManager()  {
+        return mCallbackManager;
+    }
+
+    protected FBSDKDialogBaseJavaModule(ReactApplicationContext reactContext, CallbackManager callbackManager) {
+        super(reactContext);
+        mCallbackManager = callbackManager;
+    }
 }
-
-/* $FlowFixMe(>=0.43.0) - Remove this comment to see errors found when Flow
- * v0.43.0 was deployed */
-SendButton.propTypes = {
-  ...ViewPropTypes,
-  shareContent: PropTypes.object,
-};
-
-const styles = StyleSheet.create({
-  defaultButtonStyle: {
-    height: 30,
-    width: 80,
-  },
-});
-
-SendButton.defaultProps = {
-  style: styles.defaultButtonStyle,
-};
-
-const RCTFBSendButton = requireNativeComponent('RCTFBSendButton');
-
-module.exports = SendButton;
